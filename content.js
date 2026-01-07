@@ -301,23 +301,21 @@
     }
   }
   
-  // 页面加载完成后开始监听
+  // 页面加载完成后开始监听（尽快记录）
+  const init = () => {
+    setupIntersectionObserver();
+    // 立即检查一次，确保进入页面就记录
+    setTimeout(checkAndRecordPosts, 200);
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        setupIntersectionObserver();
-        checkAndRecordPosts();
-      }, 2000); // 等待页面完全加载
-    });
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    setTimeout(() => {
-      setupIntersectionObserver();
-      checkAndRecordPosts();
-    }, 2000);
+    init();
   }
   
-  // 定期检查（作为备用方案）
-  setInterval(checkAndRecordPosts, 5000);
+  // 定期检查（备用方案）
+  setInterval(checkAndRecordPosts, 4000);
   
   // 监听滚动事件（备用方案）
   let scrollTimer = null;

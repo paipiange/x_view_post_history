@@ -3,7 +3,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLogs();
   setupSearch();
   setupClearButton();
+  subscribeStorageChange();
 });
+
+// 订阅存储变化，实时刷新列表
+function subscribeStorageChange() {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.visitLogs) {
+      const logs = changes.visitLogs.newValue || [];
+      displayLogs(logs);
+      updateCount(logs.length);
+    }
+  });
+}
 
 // 加载访问记录
 async function loadLogs() {
