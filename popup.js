@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   subscribeStorageChange();
 });
 
+// 选中集合
+const selectedSet = new Set();
+
 // 订阅存储变化，实时刷新列表
 function subscribeStorageChange() {
   chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -60,14 +63,27 @@ function displayLogs(logs) {
         ).join('')}</div>`
       : '';
     
+    const key = log.postId || log.url || `idx-${index}`;
+    const checked = selectedSet.has(key) ? 'checked' : '';
+    
     return `
-      <div class="log-item" data-index="${index}">
-        ${author}
-        <div class="log-title">${escapeHtml(log.title)}</div>
-        ${contentPreview ? `<div class="log-content">${escapeHtml(contentPreview)}</div>` : ''}
-        ${images}
-        <div class="log-url">${escapeHtml(log.url)}</div>
-        <div class="log-time">${time}</div>
+      <div class="log-item" data-index="${index}" data-key="${key}">
+        <div class="log-row">
+          <div class="log-check">
+            <input type="checkbox" class="select-log" data-key="${key}" ${checked} />
+          </div>
+          <div class="log-body">
+            ${author}
+            <div class="log-title">${escapeHtml(log.title)}</div>
+            ${contentPreview ? `<div class="log-content">${escapeHtml(contentPreview)}</div>` : ''}
+            ${images}
+            <div class="log-url">${escapeHtml(log.url)}</div>
+            <div class="log-time">${time}</div>
+            <div class="log-actions">
+              <button class="btn-small btn-danger delete-one" data-key="${key}">删除</button>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
@@ -78,6 +94,27 @@ function displayLogs(logs) {
       const index = parseInt(item.dataset.index);
       const url = logs[index].url;
       chrome.tabs.create({ url: url });
+    });
+  });
+
+  // 阻止点击删除/复选框时打开标签
+  container.querySelectorAll('.select-log').forEach(cb => {
+    cb.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = cb.dataset.key;
+      if (cb.checked) {
+        selectedSet.add(key);
+      } else {
+        selectedSet.delete(key);
+      }
+    });
+  });
+
+  container.querySelectorAll('.delete-one').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      await deleteLogs([key]);
     });
   });
 }
@@ -152,6 +189,7 @@ function setupSearch() {
 // 设置清空按钮
 function setupClearButton() {
   const clearBtn = document.getElementById('clearBtn');
+  const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
   
   clearBtn.addEventListener('click', async () => {
     if (confirm('确定要清空所有访问记录吗？')) {
@@ -164,5 +202,30 @@ function setupClearButton() {
       }
     }
   });
+
+  deleteSelectedBtn.addEventListener('click', async () => {
+    if (selectedSet.size === 0) {
+      alert('请先选择要删除的记录');
+      return;
+    }
+    if (!confirm('确定删除选中的记录吗？')) return;
+    await deleteLogs(Array.from(selectedSet));
+  });
+}
+
+// 删除指定key的记录
+async function deleteLogs(keys) {
+  try {
+    const result = await chrome.storage.local.get(['visitLogs']);
+    const logs = result.visitLogs || [];
+    const newLogs = logs.filter(log => {
+      const key = log.postId || log.url;
+      return !keys.includes(key);
+    });
+    keys.forEach(k => selectedSet.delete(k));
+    await chrome.storage.local.set({ visitLogs: newLogs });
+  } catch (error) {
+    console.error('删除记录时出错:', error);
+  }
 }
 

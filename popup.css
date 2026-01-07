@@ -61,6 +61,16 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.clear-btn.danger {
+  border-color: #ffb3b3;
+  color: #ffecec;
+}
+
+.clear-btn.danger:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
 .search-box {
   padding: 12px 20px;
   background: white;
@@ -183,5 +193,48 @@ body {
 
 .log-item.hidden {
   display: none;
+}
+
+.log-row {
+  display: flex;
+  gap: 10px;
+}
+
+.log-check {
+  margin-top: 6px;
+}
+
+.log-body {
+  flex: 1;
+}
+
+.log-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  background: #f0f0f0;
+}
+
+.btn-danger {
+  border-color: #f5b5b5;
+  color: #c0392b;
+  background: #fff5f5;
+}
+
+.btn-danger:hover {
+  background: #ffecec;
 }
 
